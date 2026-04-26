@@ -280,40 +280,6 @@ Font size: **16pt** minimum for stream readability.
 
 ---
 
-## 🎥 Demo / Video Recording
-
-Hackathon submissions prefer **30-second silent screen recordings** with sound effects only (no voiceover).
-
-**Prep:**
-
-1. Resize terminal → **120 columns × 48 rows**, dark background
-2. Font → **16pt Menlo/Fira Code/Inconsolata**, white text
-3. Disable notifications/DND
-4. `hermes observatory` → wait for full load (2–3 refresh cycles)
-
-**Recording options:**
-
-- **macOS**: `Cmd+Shift+5` → select window → start
-- **asdf**: `asciinema rec -c "hermes observatory" demo.cast` (then convert to MP4)
-- **Terminal i/o**: `script -a demo.typescript` (basic, not video)
-
-**Demo flow (30 sec):**
-
-| Time | What to show |
-|------|--------------|
-| 0–5s | Launch, fade-in animation, title appears |
-| 5–12s | Scan top banner: Gateway UP, Score ~65, Profiles online |
-| 12–20s | Scroll through low-score sessions (alerts panel), highlight red scores |
-| 20–26s | Watch log tail update in real-time (wait for new ERROR line) |
-| 26–30s | Press `s` to toggle sound (audible click), press `q` to quit |
-
-**Post-processing** (optional):
-- Overlay calm background music (low volume)
-- Add subtle SFX on scene cuts (whoosh)
-- Render at 1080p 30fps
-
----
-
 ## 🛠️ Troubleshooting
 
 | Issue | Diagnose | Fix |
@@ -373,13 +339,12 @@ To reset plugin history: `rm ~/.hermes/plugins/hermes-observatory/metrics.db` an
 **Category:** TUI / Plugin  
 **Tech stack:** Python, Textual (TUI framework), Rich (rendering), SQLite (metrics)  
 **Visual assets:** Custom color palette, smooth CSS transitions, optional sound design  
-**Demo:** 30-second silent screen capture (1080p recommended) showing live launch → data refresh → alert drill-down → quit  
 
 **Why this wins:**
 - ✔️ Functionally useful (real observability for Hermes)
 - ✔️ Visically attractive (glassmorphism, gradients, animations)
 - ✔️ Art integrated (sound effects, smooth transitions, professional typography)
-- ✔️⃣ Zero external services (all local, respecting security posture)
+- ✔️ Zero external services (all local, respecting security posture)
 - ✔️ Extensible (hooks already collecting data for future panels)
 
 ---
