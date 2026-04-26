@@ -1,245 +1,234 @@
 /**
- * Observatory Dashboard Plugin
- * Real-time agent health monitoring
+ * Hermes Observatory dashboard plugin.
+ *
+ * Plain IIFE bundle that uses the Hermes Dashboard Plugin SDK globals.
  */
-
 (function () {
   "use strict";
 
   const SDK = window.__HERMES_PLUGIN_SDK__;
-  const { React } = SDK;
-  const { Card, CardHeader, CardTitle, CardContent, Badge } = SDK.components;
-  const { useState, useEffect } = SDK.hooks;
-  const { cn } = SDK.utils;
+  const PLUGINS = window.__HERMES_PLUGINS__;
+  if (!SDK || !PLUGINS) return;
 
-  function formatTime(iso) {
-    if (!iso) return '—';
-    return new Date(iso).toLocaleString(undefined, { hour12: false });
+  const { React } = SDK;
+  const { useEffect, useMemo, useState } = SDK.hooks;
+  const { Card, CardHeader, CardTitle, CardContent, Badge, Button } = SDK.components;
+
+  const API = "/api/plugins/hermes-observatory/snapshot";
+
+  function h(type, props) {
+    const children = Array.prototype.slice.call(arguments, 2);
+    return React.createElement(type, props, ...children);
   }
 
-  function ObservatoryPage() {
-    const [gateway, setGateway] = React.useState(null);
-    const [profiles, setProfiles] = React.useState([]);
-    const [scores, setScores] = React.useState({ sessions: [] });
-    const [loading, setLoading] = React.useState(true);
+  function fmtNumber(value) {
+    return Number(value || 0).toLocaleString();
+  }
 
-    useEffect(() => {
-      function refresh() {
-        setLoading(true);
-        Promise.all([
-          SDK.fetchJSON("/api/plugins/hermes-observatory/gateway"),
-          SDK.fetchJSON("/api/plugins/hermes-observatory/scores")
-        ]).then(([gw, sc]) => {
-          setGateway(gw);
-          setProfiles(gw.profiles || []);
-          setScores(sc);
-        }).catch(err => {
-          console.error("Observatory fetch error:", err);
-        }).finally(() => setLoading(false));
-      }
-      refresh();
-      // 10s auto-refresh
-      const interval = setInterval(refresh, 10000);
-      return () => clearInterval(interval);
-    }, []);
+  function last(values) {
+    return values && values.length ? values[values.length - 1] : 0;
+  }
 
-    if (loading && !gateway) {
-      return React.createElement("div", { className: "flex items-center justify-center p-8" },
-        React.createElement("div", { className: "text-sm text-muted-foreground" }, "Loading Observatory…")
-      );
-    }
+  function spark(values) {
+    if (!values || !values.length) return "no data";
+    const blocks = "▁▂▃▄▅▆▇█";
+    const slice = values.slice(-36);
+    const min = Math.min.apply(null, slice);
+    const max = Math.max.apply(null, slice);
+    if (min === max) return "▁".repeat(slice.length);
+    return slice.map(function (v) {
+      const n = (v - min) / (max - min);
+      return blocks[Math.max(0, Math.min(blocks.length - 1, Math.floor(n * (blocks.length - 1))))];
+    }).join("");
+  }
 
-    const gwState = gateway?.gateway?.state || "unknown";
-    const platforms = Object.entries(gateway?.gateway?.platforms || {});
-    const connectedPlats = platforms.filter(([,p]) => p.state === "connected").length;
-    const profileCount = profiles.length;
-    const onlineProfiles = profiles.filter(p => p.status === "online").length;
-    const alertCount = scores.sessions?.length || 0;
-    const hasCrit = scores.sessions?.some(s => s.health === "critical");
+  function tone(priority) {
+    if (priority === "P0") return "destructive";
+    if (priority === "P1") return "secondary";
+    return "outline";
+  }
 
-    // Status color helpers
-    const stateColor = gwState === "running" ? "text-green" : gwState === "offline" ? "text-pink" : "text-orange";
-    const badgeVar = gwState === "running" ? "green" : gwState === "offline" ? "destructive" : "secondary";
-
-    return React.createElement("div", { className: "flex flex-col gap-6" },
-
-      // ── Header ──
-      React.createElement(Card, null,
-        React.createElement(CardHeader, null,
-          React.createElement("div", { className: "flex items-center gap-3" },
-            React.createElement(CardTitle, { className: "text-lg" }, "🌌 Observatory"),
-            React.createElement(Badge, { variant: badgeVar }, gwState)
-          ),
-          React.createElement("div", { className: "text-xs text-muted-foreground mt-1" },
-            "Real-time agent health — gateway, profiles, and reliability scores")
-        )
+  function Metric(props) {
+    return h(Card, { className: "observatory-card observatory-metric" },
+      h(CardContent, { className: "pt-5" },
+        h("div", { className: "observatory-label" }, props.label),
+        h("div", { className: "observatory-value", style: { color: props.color || "#e2e8f0" } }, props.value),
+        h("div", { className: "observatory-detail" }, props.detail),
       ),
-
-      // ── Stats row ──
-      React.createElement("div", { className: "grid grid-cols-4 gap-4" },
-
-        // Gateway
-        React.createElement(Card, null,
-          React.createElement(CardHeader, null,
-            React.createElement(CardTitle, { className: "text-sm font-medium text-muted-foreground" }, "Gateway")
-          ),
-          React.createElement(CardContent, null,
-            React.createElement("div", { className: cn("text-2xl font-mono font-bold", stateColor) }, gwState),
-            React.createElement("div", { className: "text-xs text-muted-foreground mt-1" },
-              `${connectedPlats}/${platforms.length} platforms`)
-          )
-        ),
-
-        // Profiles
-        React.createElement(Card, null,
-          React.createElement(CardHeader, null,
-            React.createElement(CardTitle, { className: "text-sm font-medium text-muted-foreground" }, "Profiles")
-          ),
-          React.createElement(CardContent, null,
-            React.createElement("div", { className: "text-2xl font-mono font-bold text-orange" }, profileCount),
-            React.createElement("div", { className: "text-xs text-muted-foreground mt-1" },
-              `${onlineProfiles} online, ${profileCount - onlineProfiles} offline`)
-          )
-        ),
-
-        // Cron jobs
-        React.createElement(Card, null,
-          React.createElement(CardHeader, null,
-            React.createElement(CardTitle, { className: "text-sm font-medium text-muted-foreground" }, "Cron Jobs")
-          ),
-          React.createElement(CardContent, null,
-            React.createElement("div", { className: "text-2xl font-mono font-bold text-cyan" }, "—"),
-            React.createElement("div", { className: "text-xs text-muted-foreground mt-1" }, "loading…")
-          )
-        ),
-
-        // Alerts
-        React.createElement(Card, null,
-          React.createElement(CardHeader, null,
-            React.createElement(CardTitle, { className: "text-sm font-medium text-muted-foreground" }, "Health Alerts")
-          ),
-          React.createElement(CardContent, null,
-            React.createElement("div", { className: cn("text-2xl font-mono font-bold", alertCount > 0 ? "text-pink" : "text-green") }, alertCount),
-            React.createElement("div", { className: "text-xs text-muted-foreground mt-1" },
-              alertCount > 0 ? "sessions need attention" : "all healthy")
-          )
-        )
-      ),
-
-      // ── Two-column grid ──
-      React.createElement("div", { className: "grid grid-cols-2 gap-4" },
-
-        // ── Profiles list ──
-        React.createElement(Card, null,
-          React.createElement(CardHeader, null,
-            React.createElement(CardTitle, { className: "text-sm" }, "Profiles")
-          ),
-          React.createElement(CardContent, null,
-            profiles.length === 0
-              ? React.createElement("p", { className: "text-sm text-muted-foreground" }, "No profiles found")
-              : React.createElement("div", { className: "space-y-2" },
-                  profiles.map(p => React.createElement("div", {
-                      key: p.name,
-                      className: "flex items-center justify-between py-2 border-b border-border last:border-0"
-                    },
-                    React.createElement("div", { className: "flex items-center gap-2" },
-                      React.createElement("span", {
-                        className: cn("w-2 h-2 rounded-full", p.status === "online" ? "bg-green" : "bg-orange")
-                      }),
-                      React.createElement("span", { className: "text-sm font-mono" }, p.name)
-                    ),
-                    React.createElement(Badge, { variant: p.status === "online" ? "outline" : "secondary", className: "text-xs" },
-                      p.status)
-                  ))
-                )
-          )
-        ),
-
-        // ── Health alerts ──
-        React.createElement(Card, null,
-          React.createElement(CardHeader, null,
-            React.createElement(CardTitle, { className: "text-sm flex items-center gap-2" },
-              "Low-Score Sessions",
-              alertCount > 0 && React.createElement(Badge, { variant: "destructive" }, `${alertCount}`)
-            )
-          ),
-          React.createElement(CardContent, null,
-            !scores.sessions || scores.sessions.length === 0
-              ? React.createElement("div", { className: "flex items-center gap-2 py-4 text-green text-sm" },
-                  "✓ All sessions healthy"
-                )
-              : React.createElement("div", { className: "space-y-3" },
-                  scores.sessions.map(s => React.createElement("div", {
-                      key: s.session_id,
-                      className: "p-3 rounded-lg border bg-card/50"
-                    },
-                    React.createElement("div", { className: "flex items-start justify-between gap-2" },
-                      React.createElement("div", { className: "flex-1 min-w-0" },
-                        React.createElement("div", { className: "flex items-center gap-2 mb-1" },
-                          React.createElement("span", {
-                            className: cn("w-2 h-2 rounded-full", s.health === "critical" ? "bg-pink" : "bg-orange")
-                          }),
-                          React.createElement("span", { className: "text-sm font-mono truncate" }, s.session_id),
-                          React.createElement(Badge, {
-                            variant: s.health === "critical" ? "destructive" : "secondary",
-                            className: "text-[10px]"
-                          }, s.health)
-                        ),
-                        React.createElement("div", { className: "text-xs text-muted-foreground grid grid-cols-4 gap-x-2 gap-y-1 mt-2" },
-                          React.createElement("span", null, `Score: ${s.score}`),
-                          React.createElement("span", null, `C:${s.consistency}`),
-                          React.createElement("span", null, `G:${s.grounding}`),
-                          React.createElement("span", null, `T:${s.tool_accuracy}`)
-                        )
-                      )
-                    )
-                  ))
-                )
-          )
-        )
-      ),
-
-      // ── Gateway details (full-width) ──
-      React.createElement(Card, null,
-        React.createElement(CardHeader, null,
-          React.createElement(CardTitle, { className: "text-sm" }, "Gateway Details")
-        ),
-        React.createElement(CardContent, null,
-          React.createElement("div", { className: "grid grid-cols-3 gap-8" },
-            // State
-            React.createElement("div", null,
-              React.createElement("div", { className: "text-xs text-muted-foreground uppercase tracking-wide mb-1" }, "Overall State"),
-              React.createElement("div", { className: cn("text-xl font-bold font-mono", stateColor) }, gwState)
-            ),
-            // Platforms
-            React.createElement("div", null,
-              React.createElement("div", { className: "text-xs text-muted-foreground uppercase tracking-wide mb-2" }, "Platforms"),
-              platforms.length === 0
-                ? React.createElement("div", { className: "text-sm text-muted-foreground" }, "None configured")
-                : React.createElement("div", { className: "space-y-1" },
-                    platforms.map(([name, p]) => React.createElement("div", {
-                        key: name,
-                        className: "flex items-center justify-between text-sm py-1 border-b border-border/50 last:border-0"
-                      },
-                      React.createElement("span", { className: "font-mono" }, name),
-                      React.createElement(Badge, {
-                        variant: p.state === "connected" ? "outline" : "secondary"
-                      }, p.state)
-                    ))
-                  )
-            ),
-            // Synced at
-            React.createElement("div", null,
-              React.createElement("div", { className: "text-xs text-muted-foreground uppercase tracking-wide mb-1" }, "Last Updated"),
-              React.createElement("div", { className: "text-sm font-mono text-muted-foreground" },
-                gateway?.updated_at ? formatTime(gateway.updated_at) : "—")
-            )
-          )
-        )
-      )
     );
   }
 
-  // Register with Hermes plugin registry
-  window.__HERMES_PLUGINS__.register("hermes-observatory", ObservatoryPage);
+  function ListCard(props) {
+    return h(Card, { className: "observatory-card" },
+      h(CardHeader, null,
+        h(CardTitle, { className: "text-base" }, props.title),
+      ),
+      h(CardContent, null,
+        h("div", { className: "observatory-list" }, props.children),
+      ),
+    );
+  }
+
+  function Row(props) {
+    return h("div", { className: "observatory-row" },
+      h("div", { className: "observatory-row-main" },
+        h("div", { className: "observatory-row-title" }, props.title),
+        h("div", { className: "observatory-row-sub" }, props.sub || ""),
+      ),
+      props.badge ? h(Badge, { variant: props.variant || "outline" }, props.badge) : null,
+    );
+  }
+
+  function EmptyRow(props) {
+    return h("div", { className: "observatory-row" },
+      h("div", { className: "observatory-row-main" },
+        h("div", { className: "observatory-row-title observatory-muted" }, props.children),
+      ),
+    );
+  }
+
+  function ObservatoryPage() {
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    function load() {
+      setLoading(true);
+      SDK.fetchJSON(API)
+        .then(function (snapshot) {
+          setData(snapshot);
+          setError(null);
+        })
+        .catch(function (err) {
+          setError(String(err.message || err));
+        })
+        .finally(function () {
+          setLoading(false);
+        });
+    }
+
+    useEffect(function () {
+      load();
+      const timer = setInterval(load, 5000);
+      return function () { clearInterval(timer); };
+    }, []);
+
+    const metrics = useMemo(function () {
+      if (!data) return null;
+      const reliability = data.reliability.avg == null ? "N/A" : data.reliability.avg + "/100";
+      return {
+        gateway: data.gateway.running ? "ONLINE" : "OFFLINE",
+        gatewayColor: data.gateway.running ? "#4ade80" : "#f87171",
+        reliability,
+        tokens: fmtNumber(last(data.trace.tokens)),
+        tools: fmtNumber(last(data.trace.tools)),
+      };
+    }, [data]);
+
+    if (!data && loading) {
+      return h("div", { className: "observatory-root" },
+        h(Card, { className: "observatory-card" },
+          h(CardContent, { className: "pt-6 observatory-muted" }, "Loading Observatory telemetry..."),
+        ),
+      );
+    }
+
+    if (error && !data) {
+      return h("div", { className: "observatory-root" },
+        h(Card, { className: "observatory-card" },
+          h(CardContent, { className: "pt-6" },
+            h("div", { className: "text-red-300" }, "Observatory API is unavailable."),
+            h("div", { className: "observatory-muted text-sm mt-2" }, error),
+          ),
+        ),
+      );
+    }
+
+    return h("div", { className: "observatory-root" },
+      h("section", { className: "observatory-hero" },
+        h("div", { className: "observatory-title" },
+          h("div", null,
+            h("h1", null, "Hermes Observatory"),
+            h("div", { className: "observatory-subtitle" }, "Live operational intelligence for agents, gateways, profiles, and automation."),
+          ),
+          h("div", { className: "flex items-center gap-2" },
+            h(Badge, { variant: "outline" }, "updated " + (data.updated_at || "-")),
+            h(Button, { onClick: load, disabled: loading }, loading ? "Refreshing" : "Refresh"),
+          ),
+        ),
+      ),
+
+      h("div", { className: "observatory-grid" },
+        h(Metric, { label: "Gateway", value: metrics.gateway, detail: "pid " + (data.gateway.pid || "-"), color: metrics.gatewayColor }),
+        h(Metric, { label: "Reliability", value: metrics.reliability, detail: fmtNumber(data.reliability.count) + " scored sessions", color: "#fb7185" }),
+        h(Metric, { label: "Token Burn", value: metrics.tokens, detail: "latest session window", color: "#2dd4bf" }),
+        h(Metric, { label: "Tool Calls", value: metrics.tools, detail: "latest session window", color: "#f59e0b" }),
+      ),
+
+      h("div", { className: "observatory-grid-2" },
+        h(ListCard, { title: "Active Profiles" },
+          data.active_profiles.length
+            ? data.active_profiles.map(function (p) {
+                return h(Row, {
+                  key: p.name,
+                  title: p.name,
+                  sub: "platforms: " + (p.platforms.join(", ") || "none") + " · seen " + p.updated,
+                  badge: p.state.toUpperCase(),
+                  variant: p.state === "online" ? "outline" : "secondary",
+                });
+              })
+            : h(EmptyRow, null, "No active gateway profiles"),
+        ),
+        h(ListCard, { title: "Next Moves" },
+          data.next_moves.map(function (move, index) {
+            return h(Row, {
+              key: index,
+              title: move.title,
+              sub: move.why,
+              badge: move.priority,
+              variant: tone(move.priority),
+            });
+          }),
+        ),
+      ),
+
+      h("div", { className: "observatory-grid-2" },
+        h(ListCard, { title: "Anomaly Radar" },
+          data.reliability.issues.length
+            ? data.reliability.issues.map(function (issue) {
+                return h(Row, {
+                  key: issue.id,
+                  title: issue.id,
+                  sub: issue.summary || "No details",
+                  badge: String(issue.score),
+                  variant: issue.score < 50 ? "secondary" : "outline",
+                });
+              })
+            : h(EmptyRow, null, "No reliability issues found"),
+        ),
+        h(Card, { className: "observatory-card" },
+          h(CardHeader, null, h(CardTitle, { className: "text-base" }, "Signal Trace")),
+          h(CardContent, null,
+            h("div", { className: "observatory-label" }, "tokens"),
+            h("div", { className: "observatory-spark" }, spark(data.trace.tokens)),
+            h("div", { className: "observatory-label mt-4" }, "tools"),
+            h("div", { className: "observatory-spark", style: { color: "#fb7185" } }, spark(data.trace.tools)),
+          ),
+        ),
+      ),
+
+      h(ListCard, { title: "Recent Sessions" },
+        data.sessions.slice(0, 8).map(function (session) {
+          return h(Row, {
+            key: session.id,
+            title: session.title === "-" ? session.id : session.title,
+            sub: session.source + "/" + session.user + " · " + session.model + " · " + fmtNumber(session.tokens) + " tokens · " + fmtNumber(session.tools) + " tools",
+            badge: session.seen,
+          });
+        }),
+      ),
+    );
+  }
+
+  PLUGINS.register("hermes-observatory", ObservatoryPage);
 })();

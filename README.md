@@ -7,6 +7,8 @@ reliability scores, session activity, token/tool-call traces, and suggested next
 It also includes the original `hermes observatory` terminal view as a bonus operator
 mode.
 
+![Hermes Observatory with Neural Current](screenshots/observatory-neural-current.png)
+
 ---
 
 ## Hackathon Track Fit
@@ -51,6 +53,38 @@ Dashboard tab:
 - Signal trace: compact token and tool-call sparklines
 - Next moves: deterministic recommendations generated from live signals
 - Auto-refresh: browser tab refreshes every 5 seconds
+
+---
+
+## Included Theme: Neural Current
+
+This repo also includes a dashboard theme at:
+
+```text
+themes/neural-current.yaml
+```
+
+Neural Current is an electric-blue dashboard skin inspired by flowing neural
+signals and plasma-like data currents. It pairs with Observatory by giving the
+dashboard deep navy surfaces, cyan signal states, luminous borders, and subtle
+energy-field overlays.
+
+![Neural Current dashboard theme](screenshots/neural-current-dashboard.png)
+
+Install the theme:
+
+```bash
+mkdir -p ~/.hermes/dashboard-themes
+cp themes/neural-current.yaml ~/.hermes/dashboard-themes/neural-current.yaml
+```
+
+Then select **Neural Current** from the dashboard theme switcher, or run:
+
+```bash
+curl -X PUT http://127.0.0.1:9119/api/dashboard/theme \
+  -H "Content-Type: application/json" \
+  -d '{"name":"neural-current"}'
+```
 
 ---
 

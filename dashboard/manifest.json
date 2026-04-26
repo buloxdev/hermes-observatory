@@ -1,14 +1,14 @@
 {
   "name": "hermes-observatory",
   "label": "Observatory",
-  "description": "Real-time agent health monitoring \u2014 gateway status, profile availability, reliability scores",
-  "icon": "Activity",
-  "version": "0.2.0",
+  "description": "Live gateway, profile, reliability, session, token, and next-move intelligence for Hermes Dashboard.",
+  "icon": "Radar",
+  "version": "1.0.0",
   "tab": {
     "path": "/observatory",
-    "position": "after:skills"
+    "position": "after:analytics"
   },
   "entry": "dist/index.js",
-  "css": "style.css",
-  "api": "api.py"
+  "css": "dist/style.css",
+  "api": "plugin_api.py"
 }

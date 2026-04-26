@@ -1,0 +1,123 @@
+name: neural-current
+label: "Neural Current"
+description: "Electric-blue agent telemetry — flowing plasma currents, deep navy surfaces, and luminous cyan signal states."
+
+palette:
+  background: "#020817"
+  midground: "#d8f7ff"
+  foreground:
+    hex: "#ffffff"
+    alpha: 0.08
+  warmGlow: "rgba(22, 217, 255, 0.22)"
+  noiseOpacity: 0.82
+
+typography:
+  fontSans: '"Inter", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif'
+  fontMono: '"IBM Plex Mono", "JetBrains Mono", ui-monospace, monospace'
+  fontDisplay: '"Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif'
+  fontUrl: "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+  baseSize: "14px"
+  lineHeight: "1.5"
+  letterSpacing: "0"
+
+layout:
+  radius: "0.45rem"
+  density: "compact"
+
+layoutVariant: tiled
+
+assets:
+  bg: "radial-gradient(circle at 18% 12%, rgba(22, 217, 255, 0.22), transparent 28%), radial-gradient(circle at 80% 18%, rgba(56, 189, 248, 0.18), transparent 30%), linear-gradient(135deg, #020817 0%, #04142b 42%, #062748 100%)"
+
+componentStyles:
+  card:
+    background: "linear-gradient(180deg, rgba(6, 24, 48, 0.84) 0%, rgba(2, 8, 23, 0.92) 100%)"
+    boxShadow: "inset 0 0 0 1px rgba(103, 232, 249, 0.20), 0 20px 70px -48px rgba(22, 217, 255, 0.95)"
+  header:
+    background: "linear-gradient(180deg, rgba(3, 18, 38, 0.96) 0%, rgba(2, 8, 23, 0.88) 100%)"
+  sidebar:
+    background: "linear-gradient(180deg, rgba(3, 17, 34, 0.94) 0%, rgba(2, 8, 23, 0.86) 100%)"
+  tab:
+    background: "linear-gradient(90deg, rgba(22, 217, 255, 0.14), rgba(56, 189, 248, 0.04))"
+  backdrop:
+    backgroundSize: "cover"
+    backgroundPosition: "center"
+    fillerOpacity: "1"
+    fillerBlendMode: "screen"
+
+colorOverrides:
+  card: "#061830"
+  cardForeground: "#e6f7ff"
+  popover: "#051225"
+  popoverForeground: "#e6f7ff"
+  primary: "#16d9ff"
+  primaryForeground: "#020817"
+  secondary: "#0b2a4a"
+  secondaryForeground: "#c8f4ff"
+  muted: "#08213d"
+  mutedForeground: "#7aa7bd"
+  accent: "#38bdf8"
+  accentForeground: "#020817"
+  destructive: "#fb7185"
+  destructiveForeground: "#fff1f2"
+  success: "#34d399"
+  warning: "#facc15"
+  border: "rgba(103, 232, 249, 0.22)"
+  input: "rgba(103, 232, 249, 0.24)"
+  ring: "#67e8f9"
+
+customCSS: |
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.46;
+    mix-blend-mode: screen;
+    background:
+      radial-gradient(ellipse at 12% 24%, rgba(22, 217, 255, 0.22), transparent 26%),
+      radial-gradient(ellipse at 82% 12%, rgba(56, 189, 248, 0.16), transparent 30%),
+      linear-gradient(115deg, transparent 0 28%, rgba(103, 232, 249, 0.13) 29%, transparent 35% 62%, rgba(22, 217, 255, 0.10) 63%, transparent 70%),
+      repeating-linear-gradient(132deg, rgba(103, 232, 249, 0.08) 0 1px, transparent 1px 28px);
+    filter: blur(0.2px);
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    background:
+      linear-gradient(90deg, transparent, rgba(22, 217, 255, 0.08), transparent),
+      repeating-linear-gradient(to bottom, transparent 0 3px, rgba(103, 232, 249, 0.035) 4px);
+    opacity: 0.62;
+    mix-blend-mode: screen;
+  }
+
+  [class*="border"],
+  .observatory-card {
+    border-color: rgba(103, 232, 249, 0.22);
+  }
+
+  .observatory-hero {
+    position: relative;
+    overflow: hidden;
+    border-color: rgba(103, 232, 249, 0.36);
+    background:
+      radial-gradient(circle at 18% 20%, rgba(22, 217, 255, 0.24), transparent 32%),
+      radial-gradient(circle at 82% 10%, rgba(56, 189, 248, 0.18), transparent 30%),
+      linear-gradient(135deg, rgba(2, 8, 23, 0.94), rgba(6, 24, 48, 0.96));
+  }
+
+  .observatory-hero::after {
+    content: "";
+    position: absolute;
+    inset: -20%;
+    pointer-events: none;
+    background:
+      conic-gradient(from 210deg at 50% 50%, transparent 0deg, rgba(22, 217, 255, 0.22) 42deg, transparent 78deg, rgba(103, 232, 249, 0.12) 168deg, transparent 230deg);
+    opacity: 0.55;
+    filter: blur(18px);
+  }
