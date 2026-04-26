@@ -119,20 +119,6 @@ curl http://127.0.0.1:9119/api/plugins/hermes-observatory/snapshot
 
 ---
 
-## Submission Checklist
-
-- Publish this plugin directory to GitHub as an open-source repo.
-- Include one or more screenshots or a short video of `/observatory`.
-- Mention that it is a dashboard plugin, with a bonus terminal TUI.
-- Suggested Discord blurb:
-
-```text
-Hermes Observatory: a dashboard plugin for live agent operations.
-It adds an Observatory tab with gateway health, active profiles, reliability
-scores, session activity, token/tool-call traces, and generated next moves.
-Repo: <github-url>
-Screenshots/video: <links>
-```
 
 ---
 
